@@ -53,7 +53,7 @@ judasasm.obj: judasasm.asm
 !ifeq %ASM TASM
         $(TASM_EXE) /m /ml judasasm.asm
 !else
-        *$(ASM) -zcm=tasm -ml -wx -fo=$(OUTDIR)\$^@ -fr=$(OUTDIR)\$^* $<
+        *$(ASM) -zcm=tasm -w=0 -fo=$^@ $<
 !endif
 
 clean: .SYMBOLIC

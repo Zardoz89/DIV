@@ -1293,7 +1293,7 @@ mixloop8        macro   routine, samplesize, ip
                 jmp     [EAX]
 
                 ;NOWARN
-                align 16
+                ;align 16 ; revisar por que no le mola esto a wasm
                 ;WARN
 
 offset0:       routine 0
@@ -1397,7 +1397,7 @@ mixloop16       macro   routine, samplesize, ip
                 jmp     [EAX]
 
 
-                align 16
+                ;align 16 ; revisar por que no le mola esto a wasm
 
 
 offset0:       routine 0
@@ -2767,7 +2767,7 @@ soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
                 mov     saved_reg, EBX
 
 
-                align 16
+                ;align 16 ; revisar por que no le mola esto a wasm
 
 
 mixloop:       routine                         ;Mix one sample
@@ -3004,7 +3004,7 @@ soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
                 mov     saved_reg, EBX
 
 
-                align 16
+                ;align 16 ; revisar por que no le mola esto a wasm
 
 
 mixloop:       routine                         ;Mix one sample
