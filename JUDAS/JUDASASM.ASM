@@ -28,10 +28,10 @@ DEV_FILE        =       5
 
 CACHESLOTS      =       16
 
-IPMINUS1        =       -1
-IP0             =       0
-IP1             =       1
-IP2             =       2
+_IPMINUS1        =       -1
+_IP0             =       0
+_IP1             =       1
+_IP2             =       2
 
 CACHESLOT       struc
 GDC_Pos         dd      0
@@ -2637,10 +2637,10 @@ q_mix8_stereo_l macro
 
 q_mix8_stereo_c macro   ;Here starts the pervert Hermite interpolation!!!
 
-                movsx   EBP, byte ptr [ESI+IPMINUS1]
-                movsx   EDX, byte ptr [ESI+IP1]
-                movsx   EBX, byte ptr [ESI+IP2]
-                movsx   EAX, byte ptr [ESI+IP0]
+                movsx   EBP, byte ptr [ESI+_IPMINUS1]
+                movsx   EDX, byte ptr [ESI+_IP1]
+                movsx   EBX, byte ptr [ESI+_IP2]
+                movsx   EAX, byte ptr [ESI+_IP0]
                 sal     EBX, 8                                  ;u
                 sal     EDX, 8                                  ;u \
                 mov     ip2, EBX                                ;uv \
@@ -2874,10 +2874,10 @@ q_mix16_stereo_l macro
                 endm
 
 q_mix16_stereo_c macro  ;Here starts the pervert Hermite interpolation!!!
-                movsx   EBP, word ptr [ESI*2+IPMINUS1*2]
-                movsx   EAX, word ptr [ESI*2+IP0*2]
-                movsx   EBX, word ptr [ESI*2+IP2*2]
-                movsx   EDX, word ptr [ESI*2+IP1*2]
+                movsx   EBP, word ptr [ESI*2+_IPMINUS1*2]
+                movsx   EAX, word ptr [ESI*2+_IP0*2]
+                movsx   EBX, word ptr [ESI*2+_IP2*2]
+                movsx   EDX, word ptr [ESI*2+_IP1*2]
                 mov     ip2, EBX                                ;uv\
                 mov     ip1, EDX                                ;uv \
                 mov     EBX, EAX                                ;uv\
@@ -3194,6 +3194,6 @@ safemixer_helldontcall:
                 ret
 
 judas_code_lock_end_:
-                end
+                nop
 
-                END
+                end
