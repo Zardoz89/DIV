@@ -467,7 +467,7 @@ gus_irqloop:    mov     EDX, _judas_port
                 mov     ECX, CACHESLOTS
 gusirq_seekslot:cmp     [ESI.GDC_Length], 0
                 jnz     gusirq_slotfound
-                add     ESI, type CACHESLOT
+                add     ESI, sizeof CACHESLOT ;type CACHESLOT
                 dec     ECX
                 jnz     gusirq_seekslot
                 jmp     gus_irqloop
@@ -622,7 +622,7 @@ gus_dmaprogram_:
                 mov     ECX, CACHESLOTS
 gus_seekslot:   cmp     [EBX.GDC_Length], 0
                 je      gus_slotfound
-                add     EBX, type CACHESLOT
+                add     EBX, sizeof CACHESLOT ;type CACHESLOT
                 dec     ECX
                 jnz     gus_seekslot
                 sti
@@ -673,7 +673,8 @@ gus_nohighdma:  mov     EDX, _judas_port
 
 gus_dmainit_:   cli
 		mov     gus_dmainprogress, 0
-		push    EAX EDX
+		push    EAX
+		push    EDX
 		mov     EDX, _judas_port                ;Acknowledge the DMA
 		add     EDX, GF1_REG_SELECT             ;interrupt
 		mov     AL, DMA_CONTROL
@@ -684,10 +685,11 @@ gus_dmainit_:   cli
 		mov     EAX, offset gdc
 diloop:         mov     [EAX.GDC_Pos], 0
 		mov     [EAX.GDC_Length], 0
-		add     EAX, type CACHESLOT
-		cmp     EAX, offset gdc + CACHESLOTS * type CACHESLOT
+		add     EAX, sizeof CACHESLOT ;type CACHESLOT
+		cmp     EAX, offset gdc + CACHESLOTS * sizeof CACHESLOT ;type CACHESLOT
 		jne     diloop
-		pop     EDX EAX
+		pop     EDX
+		pop     EAX
 		sti
 		ret
 
@@ -964,13 +966,13 @@ updategusm_wrap:mov     _judas_mixpos, EAX              ;Mix first to buffer
 ;First macros...
 
 getvolume       macro
-                local   @limit
+                local   limit
                 xor     EAX, EAX
                 mov     AX, [ESI.Chn_Vol]
                 cmp     EAX, 64*256
-                jbe     @limit
+                jbe     limit
                 mov     EAX, 64*256
-@limit:         xor     EBX, EBX
+limit:          xor     EBX, EBX
                 mov     BL, [ESI.Chn_MasterVol]
                 imul    EAX, EBX
                 shr     EAX, 6+8
@@ -980,15 +982,16 @@ getvolume       macro
                 endm
 
 stereoadjust    macro
-                local   @limit
+                local   limit
                 shl     EBX, 1                          ;Stereo can have 2x vol
                 cmp     EBX, 255                        ;Check that volume is
-                jbe     @limit                          ;within volumetable
+                jbe     limit                           ;within volumetable
                 mov     EBX, 255                        ;limits though
-@limit:         endm
+limit:          nop
+                endm
 
 smoothpanadjust macro
-                local   @limit1, @limit2
+                local   limit1, limit2
                 xor     EAX, EAX
                 mov     AL, [ESI.Chn_Panning]
                 mov     ECX, EBX
@@ -999,12 +1002,13 @@ smoothpanadjust macro
                 imul    EBX, EAX
                 shr     EBX, 7
                 cmp     EBX, 255
-                jbe     @limit1
+                jbe     limit1
                 mov     EBX, 255
-@limit1:        cmp     ECX, 255
-                jbe     @limit2
+limit1:         cmp     ECX, 255
+                jbe     limit2
                 mov     ECX, 255
-@limit2:        endm
+limit2:         nop
+                endm
 
 mix8_mono_n     macro   n
                 mov     BL, [ESI]
@@ -1256,11 +1260,11 @@ mix16_smooth_i  macro   n
                 endm
 
 mixloop8        macro   routine, samplesize, ip
-                local   @hitend, @subloop, @oneshot, @offsettable,
-                local   @offset0, @offset1, @offset2, @offset3
-                local   @offset4, @offset5, @offset6, @offset7
-                local   @offset8, @offset9, @offseta, @offsetb
-                local   @offsetc, @offsetd, @offsete, @offsetf
+                local   hitend, subloop, oneshot, offsettable,
+                local   offset0, offset1, offset2, offset3
+                local   offset4, offset5, offset6, offset7
+                local   offset8, offset9, offseta, offsetb
+                local   offsetc, offsetd, offsete, offsetf
                 mov     DX, [ESI.Chn_FractPos]          ;Get fractional pos
                 if ip eq 0
                 shl     EDX, 16
@@ -1285,34 +1289,34 @@ mixloop8        macro   routine, samplesize, ip
                 sub     EDI, EAX
                 sub     EDI, EAX
                 endif
-                add     EAX, offset @offsettable
+                add     EAX, offset offsettable
                 jmp     [EAX]
 
-                NOWARN
+                ;NOWARN
                 align 16
-                WARN
+                ;WARN
 
-@offset0:       routine 0
-@offset1:       routine 1
-@offset2:       routine 2
-@offset3:       routine 3
-@offset4:       routine 4
-@offset5:       routine 5
-@offset6:       routine 6
-@offset7:       routine 7
-@offset8:       routine 8
-@offset9:       routine 9
-@offseta:       routine 10
-@offsetb:       routine 11
-@offsetc:       routine 12
-@offsetd:       routine 13
-@offsete:       routine 14
-@offsetf:       routine 15
+offset0:       routine 0
+offset1:       routine 1
+offset2:       routine 2
+offset3:       routine 3
+offset4:       routine 4
+offset5:       routine 5
+offset6:       routine 6
+offset7:       routine 7
+offset8:       routine 8
+offset9:       routine 9
+offseta:       routine 10
+offsetb:       routine 11
+offsetc:       routine 12
+offsetd:       routine 13
+offsete:       routine 14
+offsetf:       routine 15
                 add     EDI, 16 * samplesize
                 cmp     ESI, smpend
-                jae     @hitend
+                jae     hitend
                 dec     loopcount
-                jnz     @offset0
+                jnz     offset0
                 mov     EAX, cptr
                 mov     [EAX.Chn_Pos], ESI
                 if ip eq 0
@@ -1320,47 +1324,47 @@ mixloop8        macro   routine, samplesize, ip
                 endif
                 mov     [EAX.Chn_FractPos], DX
                 ret
-@hitend:        mov     EAX, cptr
+hitend:        mov     EAX, cptr
                 test    [EAX.Chn_VoiceMode], VM_LOOP
-                jz      @oneshot
-@subloop:       sub     ESI, smpsubtract
+                jz      oneshot
+subloop:       sub     ESI, smpsubtract
                 cmp     ESI, smpend
-                jae     @subloop
+                jae     subloop
                 dec     loopcount
-                jnz     @offset0
+                jnz     offset0
                 mov     [EAX.Chn_Pos], ESI
                 if ip eq 0
                 shr     EDX, 16
                 endif
                 mov     [EAX.Chn_FractPos], DX
                 ret
-@oneshot:       mov     [EAX.Chn_VoiceMode], VM_OFF
+oneshot:       mov     [EAX.Chn_VoiceMode], VM_OFF
                 ret
                 align   4
-@offsettable:   dd      offset @offset0
-                dd      offset @offset1
-                dd      offset @offset2
-                dd      offset @offset3
-                dd      offset @offset4
-                dd      offset @offset5
-                dd      offset @offset6
-                dd      offset @offset7
-                dd      offset @offset8
-                dd      offset @offset9
-                dd      offset @offseta
-                dd      offset @offsetb
-                dd      offset @offsetc
-                dd      offset @offsetd
-                dd      offset @offsete
-                dd      offset @offsetf
+offsettable:   dd      offset offset0
+                dd      offset offset1
+                dd      offset offset2
+                dd      offset offset3
+                dd      offset offset4
+                dd      offset offset5
+                dd      offset offset6
+                dd      offset offset7
+                dd      offset offset8
+                dd      offset offset9
+                dd      offset offseta
+                dd      offset offsetb
+                dd      offset offsetc
+                dd      offset offsetd
+                dd      offset offsete
+                dd      offset offsetf
                 endm
 
 mixloop16       macro   routine, samplesize, ip
-                local   @hitend, @subloop, @oneshot, @offsettable,
-                local   @offset0, @offset1, @offset2, @offset3
-                local   @offset4, @offset5, @offset6, @offset7
-                local   @offset8, @offset9, @offseta, @offsetb
-                local   @offsetc, @offsetd, @offsete, @offsetf
+                local   hitend, subloop, oneshot, offsettable,
+                local   offset0, offset1, offset2, offset3
+                local   offset4, offset5, offset6, offset7
+                local   offset8, offset9, offseta, offsetb
+                local   offsetc, offsetd, offsete, offsetf
                 mov     DX, [ESI.Chn_FractPos]          ;Get fractional pos
                 if ip eq 0
                 shl     EDX, 16
@@ -1389,34 +1393,34 @@ mixloop16       macro   routine, samplesize, ip
                 sub     EDI, EAX
                 sub     EDI, EAX
                 endif
-                add     EAX, offset @offsettable
+                add     EAX, offset offsettable
                 jmp     [EAX]
 
-                NOWARN
-                align 16
-                WARN
 
-@offset0:       routine 0
-@offset1:       routine 1
-@offset2:       routine 2
-@offset3:       routine 3
-@offset4:       routine 4
-@offset5:       routine 5
-@offset6:       routine 6
-@offset7:       routine 7
-@offset8:       routine 8
-@offset9:       routine 9
-@offseta:       routine 10
-@offsetb:       routine 11
-@offsetc:       routine 12
-@offsetd:       routine 13
-@offsete:       routine 14
-@offsetf:       routine 15
+                align 16
+
+
+offset0:       routine 0
+offset1:       routine 1
+offset2:       routine 2
+offset3:       routine 3
+offset4:       routine 4
+offset5:       routine 5
+offset6:       routine 6
+offset7:       routine 7
+offset8:       routine 8
+offset9:       routine 9
+offseta:       routine 10
+offsetb:       routine 11
+offsetc:       routine 12
+offsetd:       routine 13
+offsete:       routine 14
+offsetf:       routine 15
                 add     EDI, 16 * samplesize
                 cmp     ESI, smpend
-                jae     @hitend
+                jae     hitend
                 dec     loopcount
-                jnz     @offset0
+                jnz     offset0
                 mov     EAX, cptr
                 shl     ESI, 1
                 mov     [EAX.Chn_Pos], ESI
@@ -1425,14 +1429,14 @@ mixloop16       macro   routine, samplesize, ip
                 endif
                 mov     [EAX.Chn_FractPos], DX
                 ret
-@hitend:        mov     EAX, cptr
+hitend:        mov     EAX, cptr
                 test    [EAX.Chn_VoiceMode], VM_LOOP
-                jz      @oneshot
-@subloop:       sub     ESI, smpsubtract
+                jz      oneshot
+subloop:       sub     ESI, smpsubtract
                 cmp     ESI, smpend
-                jae     @subloop
+                jae     subloop
                 dec     loopcount
-                jnz     @offset0
+                jnz     offset0
                 shl     ESI, 1
                 mov     [EAX.Chn_Pos], ESI
                 if ip eq 0
@@ -1440,25 +1444,25 @@ mixloop16       macro   routine, samplesize, ip
                 endif
                 mov     [EAX.Chn_FractPos], DX
                 ret
-@oneshot:       mov     [EAX.Chn_VoiceMode], VM_OFF
+oneshot:       mov     [EAX.Chn_VoiceMode], VM_OFF
                 ret
                 align   4
-@offsettable:   dd      offset @offset0
-                dd      offset @offset1
-                dd      offset @offset2
-                dd      offset @offset3
-                dd      offset @offset4
-                dd      offset @offset5
-                dd      offset @offset6
-                dd      offset @offset7
-                dd      offset @offset8
-                dd      offset @offset9
-                dd      offset @offseta
-                dd      offset @offsetb
-                dd      offset @offsetc
-                dd      offset @offsetd
-                dd      offset @offsete
-                dd      offset @offsetf
+offsettable:   dd      offset offset0
+                dd      offset offset1
+                dd      offset offset2
+                dd      offset offset3
+                dd      offset offset4
+                dd      offset offset5
+                dd      offset offset6
+                dd      offset offset7
+                dd      offset offset8
+                dd      offset offset9
+                dd      offset offseta
+                dd      offset offsetb
+                dd      offset offsetc
+                dd      offset offsetd
+                dd      offset offsete
+                dd      offset offsetf
                 endm
 
         ;16bit fast mixer routines start here!
@@ -1700,15 +1704,15 @@ mix_gus8_endphase_loop:
 
 normalmix_:     mov     cptr, offset _judas_channel
 normalmixloop:  call    mixchannel
-                add     cptr, type CHANNEL
-                cmp     cptr, offset _judas_channel + CHANNELS * type CHANNEL
+                add     cptr, sizeof CHANNEL ;type CHANNEL
+                cmp     cptr, offset _judas_channel + CHANNELS * sizeof CHANNEL ;type CHANNEL
                 jne     normalmixloop
                 ret
 
 ipmix_:         mov     cptr, offset _judas_channel
 ipmixloop:      call    ipmixchannel
-                add     cptr, type CHANNEL
-                cmp     cptr, offset _judas_channel + CHANNELS * type CHANNEL
+                add     cptr, sizeof CHANNEL
+                cmp     cptr, offset _judas_channel + CHANNELS * sizeof CHANNEL
                 jne     ipmixloop
                 ret
 
@@ -2497,8 +2501,8 @@ qmix_cubic_:
                 mov     cptr, offset _judas_channel
 qmix_cubic_channelloop:
                 call    qmixchannel_cubic
-                add     cptr, type CHANNEL
-                cmp     cptr, offset _judas_channel + CHANNELS * type CHANNEL
+                add     cptr, sizeof CHANNEL
+                cmp     cptr, offset _judas_channel + CHANNELS * sizeof CHANNEL
                 jne     qmix_cubic_channelloop
                 ret
 
@@ -2506,8 +2510,8 @@ qmix_linear_:
                 mov     cptr, offset _judas_channel
 qmix_linear_channelloop:
                 call    qmixchannel_linear
-                add     cptr, type CHANNEL
-                cmp     cptr, offset _judas_channel + CHANNELS * type CHANNEL
+                add     cptr, sizeof CHANNEL
+                cmp     cptr, offset _judas_channel + CHANNELS * sizeof CHANNEL
                 jne     qmix_cubic_channelloop
                 ret
 
@@ -2572,7 +2576,7 @@ q_zerovolume_looped_loop:
         ;MACROS FOR QUALITY MIXER!
 
 q_volpan14      macro
-                local   @limit
+                local   limit
                 ;Volume!
                 xor     EAX, EAX
                 mov     AX, [EBX.Chn_Vol]
@@ -2707,7 +2711,7 @@ q_mix8_stereo_c macro   ;Here starts the pervert Hermite interpolation!!!
 ;pos adds are already defined. EBP contains volume for left channel
 ;and ECX for right.
 q_mixloop8      macro routine
-                local   @mixloop, @hitend, @subloop, @oneshot, @donezladjust, @oneshot_lastsample, @soonmixloop
+                local   mixloop, hitend, subloop, oneshot, donezladjust, oneshot_lastsample, soonmixloop
                 mov     leftvol, EBP    ;Save volumes
                 mov     rightvol, ECX   ;
 
@@ -2728,7 +2732,7 @@ q_mixloop8      macro routine
 
                 mov     EAX, [EBX.Chn_Pos]      ;Is it a new sound?
                 cmp     EAX, [EBX.Chn_PrevPos]
-                je      @soonmixloop            ;jump if not
+                je      soonmixloop            ;jump if not
 ;New sound
                 mov     EDX, leftvol
 IFDEF QMIXER_STARTMUTE
@@ -2754,25 +2758,25 @@ ENDIF
                 add     [EAX+EDI-8+4], EDX
                 mov     EAX, saved_reg ;Maybe needed if sample ends now
                 mov     saved_reg, EBX
-                jmp     @donezladjust
+                jmp     donezladjust
 
-@soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
+soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
                 mov     EBP, [EBX.Chn_SmoothVolR]
                 mov     SmoothVolL, EDX
                 mov     SmoothVolR, EBP
                 mov     saved_reg, EBX
 
-                NOWARN
-                align 16
-                WARN
 
-@mixloop:       routine                         ;Mix one sample
-@donezladjust:
+                align 16
+
+
+mixloop:       routine                         ;Mix one sample
+donezladjust:
                 cmp     ESI, smpend     ;End of sample?
-                jae     @hitend
+                jae     hitend
 
                 dec     loopcount       ;Still shit to do?
-                jnz     @mixloop
+                jnz     mixloop
 
                 mov     EBX, saved_reg
                 mov     [EBX.Chn_Pos], ESI      ;No, all done. Save position
@@ -2787,17 +2791,17 @@ ENDIF
                 mov     [EBX.Chn_SmoothVolR], EBP ;
                 ret
 
-@hitend:
+hitend:
                 mov     EBX, saved_reg
                 test    [EBX.Chn_VoiceMode], VM_LOOP    ;Is it a looped sample?
-                jz      @oneshot
-@subloop:
+                jz      oneshot
+subloop:
                 sub     ESI, smpsubtract        ;Looped. Go to loop start.
                 cmp     ESI, smpend
-                jae     @subloop  ;Fucking shit, it got far beyond sample end.
+                jae     subloop  ;Fucking shit, it got far beyond sample end.
 
                 dec     loopcount       ;Still shit to do?
-                jnz     @mixloop
+                jnz     mixloop
 
                 mov     [EBX.Chn_Pos], ESI      ;No, all done. Save position
                 shr     ECX, 16
@@ -2811,7 +2815,7 @@ ENDIF
                 mov     [EBX.Chn_SmoothVolR], EBP ;
                 ret
 
-@oneshot:
+oneshot:
                 mov     [EBX.Chn_VoiceMode], VM_OFF ;Your time to die, sample!
 
                 ;If sample doesn't end at zero, zerolevel must be adjusted.
@@ -2819,7 +2823,7 @@ ENDIF
                 mov     [EBX.Chn_LastValL], 0
                 mov     [EBX.Chn_LastValR], 0
                 cmp     loopcount, 1
-                jbe     @oneshot_lastsample
+                jbe     oneshot_lastsample
                 mov     EDX, EDI                ;Get correct place in zladdbuf
                 sub     EDX, _judas_clipbuffer  ;
                 add     EDX, _judas_zladdbuffer ;
@@ -2828,7 +2832,7 @@ ENDIF
                 mov     [EBX.Chn_PrevVM], VM_OFF ;No need to update zerolevel
                 ret                              ;at beginning of next chunk
 
-@oneshot_lastsample:                            ;Last sample in mixed chunk
+oneshot_lastsample:                            ;Last sample in mixed chunk
                 mov     [EBX.Chn_PrevVM], VM_ON
                 ret
                 endm
@@ -2940,7 +2944,7 @@ q_mix16_stereo_c macro  ;Here starts the pervert Hermite interpolation!!!
 ;pos adds are already defined. EBP contains volume for left channel
 ;and ECX for right.
 q_mixloop16     macro routine
-                local   @mixloop, @hitend, @subloop, @oneshot, @donezladjust, @oneshot_lastsample, @soonmixloop
+                local   mixloop, hitend, subloop, oneshot, donezladjust, oneshot_lastsample, soonmixloop
                 mov     leftvol, EBP    ;Save volumes
                 mov     rightvol, ECX   ;
 
@@ -2965,7 +2969,7 @@ q_mixloop16     macro routine
 
                 mov     EAX, [EBX.Chn_Pos]      ;Is it a new sound?
                 cmp     EAX, [EBX.Chn_PrevPos]
-                je      @soonmixloop            ;jump if not
+                je      soonmixloop            ;jump if not
 ;New sound
                 mov     EDX, leftvol
 IFDEF QMIXER_STARTMUTE
@@ -2991,25 +2995,25 @@ ENDIF
                 add     [EAX+EDI-8+4], EDX
                 mov     EAX, saved_reg ;Maybe needed if sample ends now
                 mov     saved_reg, EBX
-                jmp     @donezladjust
+                jmp     donezladjust
 
-@soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
+soonmixloop:   mov     EDX, [EBX.Chn_SmoothVolL]
                 mov     EBP, [EBX.Chn_SmoothVolR]
                 mov     SmoothVolL, EDX
                 mov     SmoothVolR, EBP
                 mov     saved_reg, EBX
 
-                NOWARN
-                align 16
-                WARN
 
-@mixloop:       routine                         ;Mix one sample
-@donezladjust:
+                align 16
+
+
+mixloop:       routine                         ;Mix one sample
+donezladjust:
                 cmp     ESI, smpend     ;End of sample?
-                jae     @hitend
+                jae     hitend
 
                 dec     loopcount       ;Still shit to do?
-                jnz     @mixloop
+                jnz     mixloop
 
                 mov     EBX, saved_reg
                 shl     ESI, 1
@@ -3025,17 +3029,17 @@ ENDIF
                 mov     [EBX.Chn_SmoothVolR], EBP ;
                 ret
 
-@hitend:
+hitend:
                 mov     EBX, saved_reg
                 test    [EBX.Chn_VoiceMode], VM_LOOP    ;Is it a looped sample?
-                jz      @oneshot
-@subloop:
+                jz      oneshot
+subloop:
                 sub     ESI, smpsubtract        ;Looped. Go to loop start.
                 cmp     ESI, smpend
-                jae     @subloop  ;Fucking shit, it got far beyond sample end.
+                jae     subloop  ;Fucking shit, it got far beyond sample end.
 
                 dec     loopcount       ;Still shit to do?
-                jnz     @mixloop
+                jnz     mixloop
 
                 shl     ESI, 1
                 mov     [EBX.Chn_Pos], ESI      ;No, all done. Save position
@@ -3050,7 +3054,7 @@ ENDIF
                 mov     [EBX.Chn_SmoothVolR], EBP ;
                 ret
 
-@oneshot:
+oneshot:
                 mov     [EBX.Chn_VoiceMode], VM_OFF ;Your time to die, sample!
 
                 ;If sample doesn't end at zero, zerolevel must be adjusted.
@@ -3058,7 +3062,7 @@ ENDIF
                 mov     [EBX.Chn_LastValL], 0
                 mov     [EBX.Chn_LastValR], 0
                 cmp     loopcount, 1
-                jbe     @oneshot_lastsample
+                jbe     oneshot_lastsample
                 mov     EDX, EDI                ;Get correct place in zladdbuf
                 sub     EDX, _judas_clipbuffer  ;
                 add     EDX, _judas_zladdbuffer ;
@@ -3067,7 +3071,7 @@ ENDIF
                 mov     [EBX.Chn_PrevVM], VM_OFF ;No need to update zerolevel
                 ret                              ;at beginning of next chunk
 
-@oneshot_lastsample:                            ;Last sample in mixed chunk
+oneshot_lastsample:                            ;Last sample in mixed chunk
                 mov     [EBX.Chn_PrevVM], VM_ON
                 ret
                 endm
@@ -3191,3 +3195,5 @@ safemixer_helldontcall:
 
 judas_code_lock_end_:
                 end
+
+                END

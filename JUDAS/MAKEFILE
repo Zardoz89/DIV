@@ -1,4 +1,15 @@
 # JUDAS library makefile
+
+# Siempre que se pueda, se usar  WASM, pero originalmente DIV se compilaba
+# usando Turbo Assembler (TASM). Esto podr¡a, potencialmente, originar bugs
+# debido a diferencias entre ambos ensambladores. El problema es que TASM es
+# privativo, por lo que damos preferencia a WASM. Pero si esto diera problemas,
+# quiz  prefieras conseguir una copia de TASM y usarlo en su lugar.
+ASM = WASM
+
+TASM_EXE = tasm32.exe
+
+
 #
 # NOTE: modules which are or might be called from within an interrupt have the
 # -zu option, to tell that SS != DS. It'll crash otherwise.
@@ -39,11 +50,11 @@ judasdma.obj: judasdma.c
 
 #TODO: convertir judasasm.asm a WASM
 judasasm.obj: judasasm.asm
-#!ifeq %ASM TASM
-        tasm32 /m /ml judasasm.asm
-#!else
-#        $(%WASM_EXE) -ml judasasm.asm
-#!endif
+!ifeq %ASM TASM
+        $(TASM_EXE) /m /ml judasasm.asm
+!else
+        $(ASM) -ml -zcm=tasm  judasasm.asm
+!endif
 
 clean: .SYMBOLIC
         @if exist *.obj del *.obj
