@@ -1,0 +1,24 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = crlf
+insert_final_newline = true
+charset = latin1
+
+[*.md]
+end_of_line = lf
+charset = utf-8
+
+[*.{c,h,cpp,c++,C,CPP}]
+indent_style = space
+indent_size = 2
+
+[*.{prg,PRG}]
+indent_style = space
+indent_size = 4
+
+[makefile, makefile.*, *.mif]
+indent_style = tab
+indent_size = 4
+

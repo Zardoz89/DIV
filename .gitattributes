@@ -3,7 +3,6 @@ system/lenguaje.* text eol=crlf
 system/LENGUAJE.* text eol=crlf
 help/help.div text eol=crlf
 help/help.idx text eol=crlf
-install/INS_TEXT.ASC binary
 *.prg text eol=crlf
 *.PRG text eol=crlf
 *.doc text eol=crlf
@@ -27,7 +26,11 @@ makefile.* text eol=crlf
 *.bat text eol=crlf
 *.BAT text eol=crlf
 
+*.md text eol=lf
+
+
 # Don't mess with binary files
+install/INS_TEXT.ASC binary
 *.lib binary
 *.LIB binary
 *.exe binary
