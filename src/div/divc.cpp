@@ -1071,55 +1071,77 @@ void compilar(void) {
   mem[0]+=1024;
   #endif
 
-  if (program_type==1) if ((f=fopen("install\\setup.ovl","wb"))!=NULL) {
-    fwrite(div_stub,1,602,f);
+  if (program_type==1) {
+    if ((f=fopen("install\\setup.ovl","wb"))!=NULL) {
+      fwrite(div_stub,1,602,f);
 //    fwrite(mem,4,imem,f); fwrite(loc,4,iloc,f);
 //    fclose(f);
-    p=(byte*)malloc((imem+iloc)*4);
-    m=(imem+iloc)*4+1024;
-    q=(byte*)malloc(m);
-    if (p!=NULL && q!=NULL) {
-      fwrite(mem,4,9,f);
-      memcpy(p,&mem[9],(imem-9)*4);
-      memcpy(p+(imem-9)*4,loc,iloc*4);
-      n=(imem-9+iloc)*4;
-      if (!compress(q,&m,p,n)) {
-        fwrite(&n,1,4,f); // mem[0]..mem[8],longitud_datos_descomp,datos comp...
-        fwrite(q,1,m,f);
-        free(q); free(p);
-        fclose(f);
+      p=(byte*)malloc((imem+iloc)*4);
+      m=(imem+iloc)*4+1024;
+      q=(byte*)malloc(m);
+      if (p!=NULL && q!=NULL) {
+        fwrite(mem,4,9,f);
+        memcpy(p,&mem[9],(imem-9)*4);
+        memcpy(p+(imem-9)*4,loc,iloc*4);
+        n=(imem-9+iloc)*4;
+        if (!compress(q,&m,p,n)) {
+          fwrite(&n,1,4,f); // mem[0]..mem[8],longitud_datos_descomp,datos comp...
+          fwrite(q,1,m,f);
+          free(q); free(p);
+          fclose(f);
+        } else {
+          free(q); free(p);
+          fclose(f);
+          c_error(0,0);
+        }
       } else {
-        free(q); free(p);
+        if (p!=NULL) free(p);
+        if (q!=NULL) free(q);
         fclose(f);
         c_error(0,0);
       }
-    } else {
-      if (p!=NULL) free(p);
-      if (q!=NULL) free(q);
-      fclose(f);
-      c_error(0,0);
     }
   }
 
+#ifdef WRITE_BYTECODE
+  FILE* byteCodeOutput = fopen("system\\EXEC.DBC", "wb");
+#endif
+
 //if ((f=fopen(ExeGen,"wb"))!=NULL) {
 
-  if (ejecutar_programa==3) mem[0]+=128;
-  if (ignore_errors) mem[0]+=512;
+  if (ejecutar_programa==3) {
+    mem[0]+=128;
+  }
+  if (ignore_errors) {
+    mem[0]+=512;
+  }
 
   if ((f=fopen("system\\EXEC.EXE","wb"))!=NULL) {
     fwrite(div_stub,1,602,f);
 //    fwrite(mem,4,imem,f); fwrite(loc,4,iloc,f);
 //    fclose(f);
+    const size_t byteCodeSizeInBytes = (imem-9)*4;
+    const size_t initialDataSizeInBytes = iloc*4;
+    const size_t totalSize = byteCodeSizeInBytes + initialDataSizeInBytes;
     p=(byte*)malloc((imem+iloc)*4);
     m=(imem+iloc)*4+1024;
     q=(byte*)malloc(m);
     if (p!=NULL && q!=NULL) {
       fwrite(mem,4,9,f); // mem[0..8]
-      memcpy(p,&mem[9],(imem-9)*4);
-      memcpy(p+(imem-9)*4,loc,iloc*4);
-      n=(imem-9+iloc)*4;
-      // p contiene el bytecode sin comprimir, y n es su longitud
-      if (!compress(q,&m,p,n)) {
+      memcpy(p, &mem[9], byteCodeSizeInBytes);
+      memcpy(p+ (imem-9)*4,loc, initialDataSizeInBytes);
+      n = byteCodeSizeInBytes + initialDataSizeInBytes;
+#ifdef WRITE_BYTECODE
+      if (byteCodeOutput != NULL) {
+        fwrite(mem,4, 9, byteCodeOutput); // Cabecera mem[0..8]
+        fwrite(&n, 1, 4, byteCodeOutput); // Tamaño total : bytecode + datos iniciales
+        fwrite(p, 1, n, byteCodeOutput);  // Bytecode + Datos iniciales
+        //fwrite(&mem[mem[1]], 1, byteCodeSizeInBytes, byteCodeOutput);  // Bytecode
+      }
+#endif
+
+      // p deberia de contener el bytecode sin comprimir, y n es su longitud
+      if (!compress(q,&m, p, n)) {
         fwrite(&n,1,4,f); // mem[0]..mem[8],longitud_datos_descomp,datos comp...
         fwrite(q,1,m,f);
         free(q); free(p);
@@ -1127,12 +1149,22 @@ void compilar(void) {
       } else {
         free(q); free(p);
         fclose(f);
+#ifdef WRITE_BYTECODE
+        if (byteCodeOutput != NULL) {
+          fclose(byteCodeOutput);
+        }
+#endif
         c_error(0,0);
       }
     } else {
       if (p!=NULL) free(p);
       if (q!=NULL) free(q);
       fclose(f);
+#ifdef WRITE_BYTECODE
+      if (byteCodeOutput != NULL) {
+        fclose(byteCodeOutput);
+      }
+#endif
       c_error(0,0);
       //fwrite(mem,4,imem,f); fwrite(loc,4,iloc,f);
     }

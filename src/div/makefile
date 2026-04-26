@@ -14,7 +14,7 @@ MAKE			= $+ $(MAKE) -h $-
 ASM				= WASM
 TASM_EXE		= tasm32.exe
 
-OPTIONS			= -bt=dos -wx -mf -i=judas -i=netlib -i=vbe -q -dlistados
+OPTIONS			= -bt=dos -wx -mf -i=judas -i=netlib -i=vbe -q -za99 -dlistados -dWRITE_BYTECODE
 WASM_OPTIONS	= -bt=dos -q
 TASM_OPTIONS	= /w2 /z /ml /t /m2
 
