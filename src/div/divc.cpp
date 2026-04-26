@@ -7148,7 +7148,7 @@ void l_ensamblador (void) {
   fprintf(sta,"; HEX                                              Asembly\n");
 
   while (i<imem) {
-    fprintf(sta,"  %02X", (byte)i);
+    fprintf(sta,"  %02X", (byte)mem[i]);
     switch ((byte)mem[i]) {
       case lnop:
         fprintf(sta, "                                            ; ");
