@@ -995,8 +995,12 @@ void compilar(void) {
 
   // *** OJO *** Estos dos errores no son "memoria insuficiente"
 
-  if ((linf=fopen("system\\exec.lin","wb"))==NULL) c_error(0,0);
-  if ((lprg=fopen("system\\exec.pgm","wb"))==NULL) c_error(0,0);
+  if ((linf=fopen("system\\exec.lin","wb"))==NULL) {
+    c_error(0,0);
+  }
+  if ((lprg=fopen("system\\exec.pgm","wb"))==NULL) {
+    c_error(0,0);
+  }
 
   imem_max=default_buffer; imem=0;
   if ((mem_ory=mem=(int*)malloc(imem_max*sizeof(int)))==NULL) c_error(0,0);
@@ -1114,6 +1118,7 @@ void compilar(void) {
       memcpy(p,&mem[9],(imem-9)*4);
       memcpy(p+(imem-9)*4,loc,iloc*4);
       n=(imem-9+iloc)*4;
+      // p contiene el bytecode sin comprimir, y n es su longitud
       if (!compress(q,&m,p,n)) {
         fwrite(&n,1,4,f); // mem[0]..mem[8],longitud_datos_descomp,datos comp...
         fwrite(q,1,m,f);
@@ -1143,15 +1148,33 @@ void compilar(void) {
 }
 
 void free_resources(void) {
-  if (def!=NULL) fclose(def);
-  if (_buf!=NULL) free(_buf);
-  if (frm!=NULL) free(frm);
-  if (loc!=NULL) free(loc);
-  if (mem!=NULL) free(mem);
-  if (lins!=NULL) fclose(lins);
-  if (lprg!=NULL) fclose(lprg);
-  if (linf!=NULL) fclose(linf);
-  if (vnom!=NULL) free(vnom);
+  if (def!=NULL) {
+    fclose(def);
+  }
+  if (_buf!=NULL) {
+    free(_buf);
+  }
+  if (frm!=NULL) {
+    free(frm);
+  }
+  if (loc!=NULL) {
+    free(loc);
+  }
+  if (mem!=NULL) {
+    free(mem);
+  }
+  if (lins!=NULL) {
+    fclose(lins);
+  }
+  if (lprg!=NULL) {
+    fclose(lprg);
+  }
+  if (linf!=NULL) {
+    fclose(linf);
+  }
+  if (vnom!=NULL) {
+    free(vnom);
+  }
 }
 
 //อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
@@ -6874,7 +6897,7 @@ void l_objetos (void) {
   FILE * sta;
   int n,o,l;
 
-  sta=fopen("div.tab","wb");
+  sta=fopen("system\\exec.tab","wt");
 
   fprintf(sta,"þ Objetos de %s - DIV Versiขn " version "\n\n",file_in);
 
@@ -7117,147 +7140,568 @@ void save_exec_bin(void) {
 void l_ensamblador (void) {
 
   FILE * sta;
-  int i=mem[1];
+  int i=mem[1]; // mem[1] almacenza el tama๑o del programa en bytecode
 
-  sta=fopen("div.eml","wt");
+  sta=fopen("system\\exec.eml","wt");
 
-  fprintf(sta,"þ Cขdigo EML de %s - DIV Versiขn " version "\n",file_in);
+  fprintf(sta,"; C๓digo EML de %s - DIV Versi๓n " version "\n", file_in);
+  fprintf(sta,"; HEX                                              Asembly\n");
 
-  while (i<imem) { switch ((byte)mem[i]) {
-    case lnop: fprintf(sta,"%5u\tnop",i); break;
-    case lcar: fprintf(sta,"%5u\tcar %u",i,mem[i+1]); i++; break;
-    case lasi: fprintf(sta,"%5u\tasi",i); break;
-    case lori: fprintf(sta,"%5u\tori",i); break;
-    case lxor: fprintf(sta,"%5u\txor",i); break;
-    case land: fprintf(sta,"%5u\tand",i); break;
-    case ligu: fprintf(sta,"%5u\tigu",i); break;
-    case ldis: fprintf(sta,"%5u\tdis",i); break;
-    case lmay: fprintf(sta,"%5u\tmay",i); break;
-    case lmen: fprintf(sta,"%5u\tmen",i); break;
-    case lmei: fprintf(sta,"%5u\tmei",i); break;
-    case lmai: fprintf(sta,"%5u\tmai",i); break;
-    case ladd: fprintf(sta,"%5u\tadd",i); break;
-    case lsub: fprintf(sta,"%5u\tsub",i); break;
-    case lmul: fprintf(sta,"%5u\tmul",i); break;
-    case ldiv: fprintf(sta,"%5u\tdiv",i); break;
-    case lmod: fprintf(sta,"%5u\tmod",i); break;
-    case lneg: fprintf(sta,"%5u\tneg",i); break;
-    case lptr: fprintf(sta,"%5u\tptr",i); break;
-    case lnot: fprintf(sta,"%5u\tnot",i); break;
-    case laid: fprintf(sta,"%5u\taid",i); break;
-    case lcid: fprintf(sta,"%5u\tcid",i); break;
-    case lrng: fprintf(sta,"%5u\trng %u",i,mem[i+1]); i++; break;
-    case ljmp: fprintf(sta,"%5u\tjmp %u",i,mem[i+1]); i++; break;
-    case ljpf: fprintf(sta,"%5u\tjpf %u",i,mem[i+1]); i++; break;
-    case lfun: fprintf(sta,"%5u\tfun %u",i,mem[i+1]); i++; break;
-    case lcal: fprintf(sta,"%5u\tcal %u",i,mem[i+1]); i++; break;
-    case lret: fprintf(sta,"%5u\tret",i); break;
-    case lasp: fprintf(sta,"%5u\tasp",i); break;
-    case lfrm: fprintf(sta,"%5u\tfrm",i); break;
-    case lcbp: fprintf(sta,"%5u\tcbp %u",i,mem[i+1]); i++; break;
-    case lcpa: fprintf(sta,"%5u\tcpa",i); break;
-    case ltyp: fprintf(sta,"\n%5u\ttyp %u",i,mem[i+1]); i++; break;
-    case lpri: fprintf(sta,"%5u\tpri %u",i,mem[i+1]); i++; break;
-    case lcse: fprintf(sta,"%5u\tcse %u",i,mem[i+1]); i++; break;
-    case lcsr: fprintf(sta,"%5u\tcsr %u",i,mem[i+1]); i++; break;
-    case lshr: fprintf(sta,"%5u\tshr",i); break;
-    case lshl: fprintf(sta,"%5u\tshl",i); break;
-    case lipt: fprintf(sta,"%5u\tipt",i); break;
-    case lpti: fprintf(sta,"%5u\tpti",i); break;
-    case ldpt: fprintf(sta,"%5u\tdpt",i); break;
-    case lptd: fprintf(sta,"%5u\tptd",i); break;
-    case lada: fprintf(sta,"%5u\tada",i); break;
-    case lsua: fprintf(sta,"%5u\tsua",i); break;
-    case lmua: fprintf(sta,"%5u\tmua",i); break;
-    case ldia: fprintf(sta,"%5u\tdia",i); break;
-    case lmoa: fprintf(sta,"%5u\tmoa",i); break;
-    case lana: fprintf(sta,"%5u\tana",i); break;
-    case lora: fprintf(sta,"%5u\tora",i); break;
-    case lxoa: fprintf(sta,"%5u\txoa",i); break;
-    case lsra: fprintf(sta,"%5u\tsra",i); break;
-    case lsla: fprintf(sta,"%5u\tsla",i); break;
-    case lpar: fprintf(sta,"%5u\tpar %u",i,mem[i+1]); i++; break;
-    case lrtf: fprintf(sta,"%5u\trtf",i); break;
-    case lclo: fprintf(sta,"%5u\tclo %u",i,mem[i+1]); i++; break;
-    case lfrf: fprintf(sta,"%5u\tfrf",i); break;
-    case limp: fprintf(sta,"%5u\timp %u",i,mem[i+1]); i++; break;
-    case lext: fprintf(sta,"%5u\text %u",i,mem[i+1]); i++; break;
-    case lchk: fprintf(sta,"%5u\tchk",i); break;
-    case ldbg: fprintf(sta,"%5u\tdbg",i); break;
+  while (i<imem) {
+    fprintf(sta,"  %02X", (byte)i);
+    switch ((byte)mem[i]) {
+      case lnop:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"nop");
+        break;
+      
+      case lcar:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"car %u",mem[i+1]);
+        i++;
+        break;
+      
+      case lasi:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"asi");
+        break;
+      
+      case lori:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ori");
+        break;
+      case lxor:
+        fprintf(sta,"                                            ; ");
+        fprintf(sta,"xor");
+        break;
+      case land:
+        fprintf(sta,"                                            ; ");
+        fprintf(sta,"and");
+        break;
+      case ligu:
+        fprintf(sta,"                                            ; ");
+        fprintf(sta,"igu");
+        break;
+      case ldis:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"dis");
+        break;
+      case lmay:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"may");
+        break;
+      case lmen:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"men");
+        break;
+      case lmei:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"mei");
+        break;
+      case lmai:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"mai");
+        break;
+      case ladd:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"add");
+        break;
+      case lsub:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"sub");
+        break;
+      case lmul:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"mul");
+        break;
+      case ldiv:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"div");
+        break;
+      case lmod:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"mod");
+        break;
+      case lneg:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"neg");
+        break;
+      case lptr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptr");
+        break;
+      case lnot:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"not");
+        break;
+      case laid:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"aid");
+        break;
+      case lcid:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"cid");
+        break;
+      case lrng:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"rng %u",mem[i+1]); i++;
+        break;
+      case ljmp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"jmp %u",mem[i+1]); i++;
+        break;
+      case ljpf:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"jpf %u",mem[i+1]); i++;
+        break;
+      case lfun:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"fun %u",mem[i+1]); i++;
+        break;
+      case lcal:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"cal %u",mem[i+1]); i++;
+        break;
+      case lret:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ret\n");
+        break;
+      case lasp:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"asp");
+        break;
+      case lfrm:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"frm");
+        break;
+      case lcbp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"cbp %u",mem[i+1]); i++;
+        break;
+      case lcpa:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"cpa");
+        break;
+      case ltyp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"typ %u\n",mem[i+1]); i++;
+        break;
+      case lpri:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"pri %u",mem[i+1]); i++;
+        break;
+      case lcse:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"cse %u",mem[i+1]); i++;
+        break;
+      case lcsr:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"csr %u",mem[i+1]); i++;
+        break;
+      case lshr:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"shr");
+        break;
+      case lshl:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"shl");
+        break;
+      case lipt:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ipt");
+        break;
+      case lpti:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"pti");
+        break;
+      case ldpt:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"dpt");
+        break;
+      case lptd:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ptd");
+        break;
+      case lada:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ada");
+        break;
+      case lsua:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"sua");
+        break;
+      case lmua:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"mua");
+        break;
+      case ldia:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"dia");
+        break;
+      case lmoa:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"moa");
+        break;
+      case lana:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ana");
+        break;
+      case lora:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"ora");
+        break;
+      case lxoa:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"xoa");
+        break;
+      case lsra:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"sra");
+        break;
+      case lsla:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"sla");
+        break;
+      case lpar:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"par %u",mem[i+1]); i++;
+        break;
+      case lrtf:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"rtf");
+        break;
+      case lclo:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"clo %u",mem[i+1]); i++;
+        break;
+      case lfrf:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"frf");
+        break;
+      case limp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"imp %u",mem[i+1]); i++;
+        break;
+      case lext:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"ext %u",mem[i+1]); i++;
+        break;
+      case lchk:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"chk");
+        break;
+      case ldbg:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"dbg");
+        break;
 
-    case lcar2: fprintf(sta,"%5u\tcar2 %u %u",i,mem[i+1],mem[i+2]); i+=2; break;
-    case lcar3: fprintf(sta,"%5u\tcar3 %u %u %u",i,mem[i+1],mem[i+2],mem[i+3]); i+=3; break;
-    case lcar4: fprintf(sta,"%5u\tcar4 %u %u %u %u",i,mem[i+1],mem[i+2],mem[i+3],mem[i+4]); i+=4; break;
-    case lasiasp: fprintf(sta,"%5u\tasiasp",i); break;
-    case lcaraid: fprintf(sta,"%5u\tcaraid %u",i,mem[i+1]); i++; break;
-    case lcarptr: fprintf(sta,"%5u\tcarptr %u",i,mem[i+1]); i++; break;
-    case laidptr: fprintf(sta,"%5u\taidptr",i); break;
-    case lcaraidptr: fprintf(sta,"%5u\tcaraidptr %u",i,mem[i+1]); i++; break;
-    case lcaraidcpa: fprintf(sta,"%5u\tcaraidcpa %u",i,mem[i+1]); i++; break;
-    case laddptr: fprintf(sta,"%5u\taddptr",i); break;
-    case lfunasp: fprintf(sta,"%5u\tfunasp %u",i,mem[i+1]); i++; break;
-    case lcaradd: fprintf(sta,"%5u\tcaradd %u",i,mem[i+1]); i++; break;
-    case lcaraddptr: fprintf(sta,"%5u\tcaraddptr %u",i,mem[i+1]); i++; break;
-    case lcarmul: fprintf(sta,"%5u\tcarmul %u",i,mem[i+1]); i++; break;
-    case lcarmuladd: fprintf(sta,"%5u\tcarmuladd %u",i,mem[i+1]); i++; break;
-    case lcarasiasp: fprintf(sta,"%5u\tcarasiasp %u",i,mem[i+1]); i++; break;
-    case lcarsub: fprintf(sta,"%5u\tcarsub %u",i,mem[i+1]); i++; break;
-    case lcardiv: fprintf(sta,"%5u\tcardiv %u",i,mem[i+1]); i++; break;
+      case lcar2:
+        fprintf(sta," %08X %08X", mem[i+1], mem[i+2]);
+        fprintf(sta,"                         ; ");
+        fprintf(sta,"car2 %u %u",mem[i+1],mem[i+2]); i+=2;
+        break;
+      case lcar3:
+        fprintf(sta," %08X %08X %08X", mem[i+1], mem[i+2], mem[i+3]);
+        fprintf(sta,"                 ; ");
+        fprintf(sta,"car3 %u %u %u",mem[i+1],mem[i+2],mem[i+3]); i+=3;
+        break;
+      case lcar4:
+        fprintf(sta," %08X %08X %08X %08X", mem[i+1], mem[i+2], mem[i+3], mem[i+4]);
+        fprintf(sta,"         ; ");
+        fprintf(sta,"car4 %u %u %u %u",mem[i+1],mem[i+2],mem[i+3],mem[i+4]); i+=4;
+        break;
+      case lasiasp:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"asiasp");
+        break;
+      case lcaraid:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"caraid %u",mem[i+1]); i++;
+        break;
+      case lcarptr:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"carptr %u",mem[i+1]); i++;
+        break;
+      case laidptr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"aidptr");
+        break;
+      case lcaraidptr:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"caraidptr %u",mem[i+1]); i++;
+        break;
+      case lcaraidcpa:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"caraidcpa %u",mem[i+1]); i++;
+        break;
+      case laddptr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"addptr");
+        break;
+      case lfunasp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"funasp %u",mem[i+1]); i++;
+        break;
+      case lcaradd:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"caradd %u",mem[i+1]); i++;
+        break;
+      case lcaraddptr:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"caraddptr %u",mem[i+1]); i++;
+        break;
+      case lcarmul:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"carmul %u",mem[i+1]); i++;
+        break;
+      case lcarmuladd:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"carmuladd %u",mem[i+1]); i++;
+        break;
+      case lcarasiasp:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"carasiasp %u",mem[i+1]); i++;
+        break;
+      case lcarsub:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"carsub %u",mem[i+1]); i++;
+        break;
+      case lcardiv:
+        fprintf(sta," %08X", mem[i+1]);
+        fprintf(sta,"                                    ; ");
+        fprintf(sta,"cardiv %u",mem[i+1]); i++;
+        break;
 
-    case lptrwor: fprintf(sta,"%5u\tptrwor",i); break;
-    case lasiwor: fprintf(sta,"%5u\tasiwor",i); break;
-    case liptwor: fprintf(sta,"%5u\tiptwor",i); break;
-    case lptiwor: fprintf(sta,"%5u\tptiwor",i); break;
-    case ldptwor: fprintf(sta,"%5u\tdptwor",i); break;
-    case lptdwor: fprintf(sta,"%5u\tptdwor",i); break;
-    case ladawor: fprintf(sta,"%5u\tadawor",i); break;
-    case lsuawor: fprintf(sta,"%5u\tsuawor",i); break;
-    case lmuawor: fprintf(sta,"%5u\tmuawor",i); break;
-    case ldiawor: fprintf(sta,"%5u\tdiawor",i); break;
-    case lmoawor: fprintf(sta,"%5u\tmoawor",i); break;
-    case lanawor: fprintf(sta,"%5u\tanawor",i); break;
-    case lorawor: fprintf(sta,"%5u\torawor",i); break;
-    case lxoawor: fprintf(sta,"%5u\txoawor",i); break;
-    case lsrawor: fprintf(sta,"%5u\tsrawor",i); break;
-    case lslawor: fprintf(sta,"%5u\tslawor",i); break;
-    case lcpawor: fprintf(sta,"%5u\tcpawor",i); break;
+      case lptrwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptrwor");
+        break;
+      case lasiwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"asiwor");
+        break;
+      case liptwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"iptwor");
+        break;
+      case lptiwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptiwor");
+        break;
+      case ldptwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"dptwor");
+        break;
+      case lptdwor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptdwor");
+        break;
+      case ladawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"adawor");
+        break;
+      case lsuawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"suawor");
+        break;
+      case lmuawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"muawor");
+        break;
+      case ldiawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"diawor");
+        break;
+      case lmoawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"moawor");
+        break;
+      case lanawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"anawor");
+        break;
+      case lorawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"orawor");
+        break;
+      case lxoawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"xoawor");
+        break;
+      case lsrawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"srawor");
+        break;
+      case lslawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"slawor");
+        break;
+      case lcpawor:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"cpawor");
+        break;
 
-    case lptrchr: fprintf(sta,"%5u\tptrchr",i); break;
-    case lasichr: fprintf(sta,"%5u\tasichr",i); break;
-    case liptchr: fprintf(sta,"%5u\tiptchr",i); break;
-    case lptichr: fprintf(sta,"%5u\tptichr",i); break;
-    case ldptchr: fprintf(sta,"%5u\tdptchr",i); break;
-    case lptdchr: fprintf(sta,"%5u\tptdchr",i); break;
-    case ladachr: fprintf(sta,"%5u\tadachr",i); break;
-    case lsuachr: fprintf(sta,"%5u\tsuachr",i); break;
-    case lmuachr: fprintf(sta,"%5u\tmuachr",i); break;
-    case ldiachr: fprintf(sta,"%5u\tdiachr",i); break;
-    case lmoachr: fprintf(sta,"%5u\tmoachr",i); break;
-    case lanachr: fprintf(sta,"%5u\tanachr",i); break;
-    case lorachr: fprintf(sta,"%5u\torachr",i); break;
-    case lxoachr: fprintf(sta,"%5u\txoachr",i); break;
-    case lsrachr: fprintf(sta,"%5u\tsrachr",i); break;
-    case lslachr: fprintf(sta,"%5u\tslachr",i); break;
-    case lcpachr: fprintf(sta,"%5u\tcpachr",i); break;
+      case lptrchr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptrchr");
+        break;
+      case lasichr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"asichr");
+        break;
+      case liptchr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"iptchr");
+        break;
+      case lptichr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptichr");
+        break;
+      case ldptchr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"dptchr");
+        break;
+      case lptdchr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"ptdchr");
+        break;
+      case ladachr:
+        fprintf(sta,"                                             ; ");
+        fprintf(sta,"adachr");
+        break;
+      case lsuachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"suachr");
+        break;
+      case lmuachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"muachr");
+        break;
+      case ldiachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"diachr");
+        break;
+      case lmoachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"moachr");
+        break;
+      case lanachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"anachr");
+        break;
+      case lorachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"orachr");
+        break;
+      case lxoachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"xoachr");
+        break;
+      case lsrachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"srachr");
+        break;
+      case lslachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"slachr");
+        break;
+      case lcpachr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"cpachr");
+        break;
 
-    case lstrcpy: fprintf(sta,"%5u\tstrcpy",i); break;
-    case lstrfix: fprintf(sta,"%5u\tstrfix",i); break;
-    case lstrcat: fprintf(sta,"%5u\tstrcat",i); break;
-    case lstradd: fprintf(sta,"%5u\tstradd",i); break;
-    case lstrdec: fprintf(sta,"%5u\tstrdec",i); break;
-    case lstrsub: fprintf(sta,"%5u\tstrsub",i); break;
-    case lstrlen: fprintf(sta,"%5u\tstrlen",i); break;
-    case lstrigu: fprintf(sta,"%5u\tstrigu",i); break;
-    case lstrdis: fprintf(sta,"%5u\tstrdis",i); break;
-    case lstrmay: fprintf(sta,"%5u\tstrmay",i); break;
-    case lstrmen: fprintf(sta,"%5u\tstrmen",i); break;
-    case lstrmei: fprintf(sta,"%5u\tstrmei",i); break;
-    case lstrmai: fprintf(sta,"%5u\tstrmai",i); break;
-    case lcpastr: fprintf(sta,"%5u\tcpastr",i); break;
+      case lstrcpy:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strcpy");
+        break;
+      case lstrfix:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strfix");
+        break;
+      case lstrcat:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strcat");
+        break;
+      case lstradd:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"stradd");
+        break;
+      case lstrdec:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strdec");
+        break;
+      case lstrsub:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strsub");
+        break;
+      case lstrlen:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strlen");
+        break;
+      case lstrigu:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strigu");
+        break;
+      case lstrdis:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strdis");
+        break;
+      case lstrmay:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strmay");
+        break;
+      case lstrmen:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strmen");
+        break;
+      case lstrmei:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strmei");
+        break;
+      case lstrmai:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"strmai");
+        break;
+      case lcpastr:
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"cpastr");
+        break;
 
-    default: fprintf(sta,"***"); break;
-  } fprintf(sta,"\n"); i++; }
-  fclose (sta);
+      default: 
+        fprintf(sta, "                                            ; ");
+        fprintf(sta,"***");
+        break;
+    }
+    fprintf(sta,"\n");
+    i++; 
+  }
+  fclose(sta);
 }
 
 #endif
