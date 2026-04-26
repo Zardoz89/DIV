@@ -33,9 +33,9 @@ El compilador genera **127+ opcodes** para una máquina virtual.
 | 24     | 0x18  | `ljpf`   | `jpf IMM`     | Salto si es falso |
 | 25     | 0x19  | `lfun`   | `fun IMM`     | Llamada a proceso interno (`signal()`, etc.) |
 | 26     | 0x1A  | `lcal`   | `cal IMM`     | Crea un nuevo proceso |
-| 27     | 0x1B  | `lret`   | `ret IMM`     | Auto-eliminación del proceso |
+| 27     | 0x1B  | `lret`   | `ret`         | Auto-eliminación del proceso |
 | 28     | 0x1C  | `lasp`   | `asp`         | Desecha un valor apilado |
-| 29     | 0x1D  | `lfrm`   | `frm IMM`     | Detiene la ejecución por este frame |
+| 29     | 0x1D  | `lfrm`   | `frm`         | Detiene la ejecución por este frame |
 | 30     | 0x1E  | `lcbp`   | `cbp IMM`     | Inicializa puntero a parámetros locales |
 | 31     | 0x1F  | `lcpa`   | `cpa`         | Saca offset, lee parámetro y bp++ |
 | 32     | 0x20  | `ltyp`   | `typ IMM`     | Define tipo de proceso (colisiones) |
@@ -59,9 +59,9 @@ El compilador genera **127+ opcodes** para una máquina virtual.
 | 50     | 0x32  | `lsra`   | `sra`         | Shr-asignación |
 | 51     | 0x33  | `lsla`   | `sla`         | Shl-asignación |
 | 52     | 0x34  | `lpar`   | `par IMM`     | Define número de parámetros privados |
-| 53     | 0x35  | `lrtf`   | `rtf IMM`     | Auto-eliminación, devuelve un valor |
+| 53     | 0x35  | `lrtf`   | `rtf`         | Auto-eliminación, devuelve un valor |
 | 54     | 0x36  | `lclo`   | `clo IMM`     | Crea un clon del proceso actual |
-| 55     | 0x37  | `lfrf`   | `frf IMM`     | Pseudo-Frame (frame a un porcentaje) |
+| 55     | 0x37  | `lfrf`   | `frf`         | Pseudo-Frame (frame a un porcentaje) |
 | 56     | 0x38  | `limp`   | `imp IMM`     | Importa una DLL externa |
 | 57     | 0x39  | `lext`   | `ext IMM`     | Llama a una función externa |
 | 58     | 0x3A  | `lchk`   | `chk`         | Comprueba validez de un identificador |
