@@ -27,8 +27,10 @@
 # ficheros temporales de programas externos
 /3rdparty/scitech/doc/*/*.[Gg][Ii][Dd]
 
-# Ficheros temporales de VIM
+# Ficheros temporales de VIM, Kate, etc
 *~
+*.swp
+*-swp
 
 # carpetas
 /bin
